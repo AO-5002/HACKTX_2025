@@ -13,10 +13,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cars } from "@/lib/cars";
 
-function PlaceholderImage() {
-  return <Skeleton className="h-full w-full bg-zinc-200 rounded-lg" />;
+/* --------------------------------------------------- */
+/* Helper: Get Image Path                              */
+/* --------------------------------------------------- */
+function getCarImagePath(year: number, make: string, model: string) {
+  const formattedName = `${make} ${model}`
+    .toUpperCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^\w_]/g, "");
+
+  return `/CAR_MODELS/${year}_${formattedName}.jpg`;
 }
 
+/* --------------------------------------------------- */
+/* Placeholder Fallback                                */
+/* --------------------------------------------------- */
+function PlaceholderImage() {
+  return (
+    <div className="w-full h-[300px] flex items-center justify-center bg-zinc-100 rounded-xl">
+      <Skeleton className="h-full w-full rounded-xl" />
+    </div>
+  );
+}
+
+/* --------------------------------------------------- */
+/* Car Card Component                                  */
+/* --------------------------------------------------- */
 export function CarCard({
   name,
   model,
@@ -33,11 +55,15 @@ export function CarCard({
   slug: string;
 }) {
   const router = useRouter();
-  const pathname = usePathname(); // e.g. /analytics/1/match
+  const pathname = usePathname();
+
+  const imagePath = getCarImagePath(year, name, model);
+  const [imgError, setImgError] = React.useState(false);
 
   return (
     <Card className="w-full h-full max-w-[1100px] border border-zinc-200 shadow-sm hover:shadow-md transition">
-      <CardContent className="flex flex-col h-[500px] w-full justify-between p-6 gap-6 bg-white">
+      <CardContent className="flex flex-col h-[550px] w-full justify-between p-6 gap-6 bg-white">
+        {/* Header */}
         <div className="self-start">
           <h1 className="text-3xl font-semibold text-zinc-900">{name}</h1>
           <p className="text-sm text-zinc-500">
@@ -45,11 +71,26 @@ export function CarCard({
           </p>
         </div>
 
-        <div className="flex-1 w-full overflow-hidden rounded-lg">
-          <PlaceholderImage />
+        {/* Image Section */}
+        <div className="relative w-full h-[320px] rounded-xl overflow-hidden bg-zinc-100">
+          {!imgError ? (
+            <img
+              src={imagePath}
+              alt={`${year} ${name} ${model}`}
+              className="w-full h-full object-contain object-center rounded-xl transition-transform duration-300 hover:scale-105"
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <img
+              src="/CAR_MODELS/default.png"
+              alt="Default Car Image"
+              className="w-full h-full object-contain object-center rounded-xl opacity-80"
+            />
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs">
+        {/* Features */}
+        <div className="flex flex-wrap gap-2 text-xs justify-start">
           {features.map((f, i) => (
             <span
               key={i}
@@ -60,6 +101,7 @@ export function CarCard({
           ))}
         </div>
 
+        {/* Footer */}
         <div className="flex items-end justify-between">
           <div>
             <p className="text-[10px] uppercase tracking-wide text-zinc-500">
@@ -79,6 +121,9 @@ export function CarCard({
   );
 }
 
+/* --------------------------------------------------- */
+/* Horizontal Carousel Component                       */
+/* --------------------------------------------------- */
 export function HorizontalCarousel() {
   return (
     <div className="flex items-center justify-center w-full h-full">
