@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { cars } from "@/lib/cars";
 import { PageLayout, MainContent } from "@/layouts/PageLayout";
 import CarModelViewer from "@/components/CarModelViewer";
-import { TrendingUp, Zap, Gauge } from "lucide-react";
+import { Gauge } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-/* ---------- Analytics card ---------- */
 function AnalyticStat({
   label,
   value,
@@ -17,23 +17,17 @@ function AnalyticStat({
 }) {
   return (
     <div className="flex flex-col justify-between bg-white rounded-xl shadow-sm p-6 border border-zinc-100 hover:shadow-md transition">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-medium text-zinc-600">{label}</p>
-      </div>
-
-      <div className="flex items-end justify-between mt-2">
-        <div className="text-xl font-semibold text-zinc-800">{value}</div>
-      </div>
+      <p className="text-xs font-medium text-zinc-600 mb-2">{label}</p>
+      <div className="text-xl font-semibold text-zinc-800">{value}</div>
     </div>
   );
 }
 
-/* ---------- Main Page ---------- */
 export default function CarDetailPage() {
   const { car: carSlug } = useParams() as { car: string };
+  const router = useRouter();
   const car = cars.find((c) => c.slug === carSlug);
 
-  /* ---------- Derived mock analytics ---------- */
   const analytics = useMemo(() => {
     if (!car) return null;
 
@@ -81,7 +75,6 @@ export default function CarDetailPage() {
     );
   }
 
-  /* ---------- Layout ---------- */
   return (
     <PageLayout>
       <MainContent
@@ -122,7 +115,6 @@ export default function CarDetailPage() {
               </div>
 
               <div className="flex flex-col gap-4 text-xs text-zinc-600">
-                {/* Acceleration */}
                 <div className="flex justify-between">
                   <span>Acceleration</span>
                   <span>
@@ -138,7 +130,6 @@ export default function CarDetailPage() {
                   />
                 </div>
 
-                {/* Reliability */}
                 <div className="flex justify-between">
                   <span>Reliability</span>
                   <span>{analytics.perf.reliability.toFixed(0)}%</span>
@@ -152,7 +143,6 @@ export default function CarDetailPage() {
                   />
                 </div>
 
-                {/* Comfort */}
                 <div className="flex justify-between">
                   <span>Comfort Rating</span>
                   <span>{analytics.perf.comfort.toFixed(0)}%</span>
@@ -181,6 +171,25 @@ export default function CarDetailPage() {
                   </span>
                 ))}
               </div>
+            </div>
+
+            {/* ---------- Action Buttons ---------- */}
+            <div className="flex justify-between mt-6">
+              <Button
+                variant="outline"
+                onClick={() => router.back()}
+                className="px-6"
+              >
+                Go Back
+              </Button>
+
+              <Button
+                variant="default"
+                onClick={() => router.push("/analytics/1/suggestions")}
+                className="px-6 bg-[#EB0A1E] hover:bg-[#c00918] text-white"
+              >
+                Select
+              </Button>
             </div>
           </div>
         </div>

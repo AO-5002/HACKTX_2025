@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Wallet, Heart, Search, Table2 } from "lucide-react";
+import { Settings, Heart, Search, Table2 } from "lucide-react";
 import Dock from "./Dock";
 
 function Navbar() {
@@ -18,19 +18,20 @@ function Navbar() {
       onClick: () => navigateTo("dashboard/1"),
     },
     {
-      icon: <Wallet height={18} width={18} />,
-      label: "Home",
-      onClick: () => navigateTo("home"),
-    },
-    {
       icon: <Heart height={18} width={18} />,
-      label: "Archive",
+      label: "match",
       onClick: () => navigateTo(`analytics/${1}/match`),
     },
     {
       icon: <Search height={18} width={18} />,
       label: "Profile",
       onClick: () => navigateTo("profile"),
+    },
+
+    {
+      icon: <Settings height={18} width={18} />,
+      label: "settings",
+      onClick: () => {},
     },
   ];
 

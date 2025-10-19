@@ -9,9 +9,8 @@ import ToyotaIcon from "@/components/ToyotaIcon";
 import { Input } from "@/components/ui/input";
 
 /* --------------------------------------------------- */
-/* Data Schema                                         */
+/* QUESTIONS                                            */
 /* --------------------------------------------------- */
-
 const questions = [
   {
     id: 0,
@@ -20,17 +19,27 @@ const questions = [
     type: "input",
     inputs: [
       { name: "income", label: "Annual Income ($)", placeholder: "e.g. 75000" },
-      {
-        name: "creditScore",
-        label: "Credit Score",
-        placeholder: "e.g. 720",
-      },
+      { name: "creditScore", label: "Credit Score", placeholder: "e.g. 720" },
     ],
   },
   {
     id: 1,
+    field: "monthlyBudget",
+    question: "What's your estimated monthly car budget?",
+    type: "input",
+    inputs: [
+      {
+        name: "monthlyBudget",
+        label: "Monthly Budget ($)",
+        placeholder: "e.g. 450",
+      },
+    ],
+  },
+  {
+    id: 2,
     field: "vehicleCondition",
     question: "What type of vehicle are you looking for?",
+    type: "choice",
     answers: ["NEW", "USED"],
     answer_description: [
       "Brand new vehicles with zero mileage.",
@@ -38,9 +47,10 @@ const questions = [
     ],
   },
   {
-    id: 2,
+    id: 3,
     field: "fuelType",
     question: "What type of fuel do you prefer?",
+    type: "choice",
     answers: ["GAS", "HYBRID", "ELECTRIC"],
     answer_description: [
       "Traditional gasoline vehicles.",
@@ -49,9 +59,10 @@ const questions = [
     ],
   },
   {
-    id: 3,
-    field: "vehicleYear",
+    id: 4,
+    field: "vehicleYearRange",
     question: "Select your preferred vehicle year range:",
+    type: "choice",
     answers: ["2010-2015", "2016-2020", "2021-2025"],
     answer_description: [
       "Affordable older models with lower cost.",
@@ -59,22 +70,24 @@ const questions = [
       "Newest models with modern tech and safety.",
     ],
   },
-];
+] as const;
 
 /* --------------------------------------------------- */
-/* CardAnswer Component                                */
+/* CARD ANSWER COMPONENT                               */
 /* --------------------------------------------------- */
+interface CardAnswerProps {
+  title: string;
+  description: string;
+  onClick?: () => void;
+  isSelected?: boolean;
+}
+
 function CardAnswer({
   title,
   description,
   onClick,
   isSelected,
-}: {
-  title: string;
-  description: string;
-  onClick?: () => void;
-  isSelected?: boolean;
-}) {
+}: CardAnswerProps) {
   return (
     <div
       onClick={onClick}
@@ -91,120 +104,168 @@ function CardAnswer({
 }
 
 /* --------------------------------------------------- */
-/* Onboarding Component                                */
+/* ONBOARDING COMPONENT                                */
 /* --------------------------------------------------- */
-function Onboarding() {
+export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, any>>({
+  const [answers, setAnswers] = useState<{
+    userSpecific: { income: string; creditScore: string };
+    monthlyBudget: string;
+    vehicleCondition?: string;
+    fuelType?: string;
+    vehicleYearRange?: string;
+  }>({
     userSpecific: { income: "", creditScore: "" },
+    monthlyBudget: "",
   });
 
   const current = questions[step];
 
-  /* --- Select / Deselect answers --- */
-  const handleAnswerSelect = (field: string, value: string) => {
-    setAnswers((prev) => {
-      const updated = { ...prev };
-      if (updated[field] === value) delete updated[field];
-      else updated[field] = value;
-      return updated;
-    });
+  /* ------------------------ */
+  /* Generate or Retrieve ID  */
+  /* ------------------------ */
+  const getOrCreateUserId = (): string => {
+    let id = localStorage.getItem("userId");
+    if (!id) {
+      id = `USER#${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      localStorage.setItem("userId", id);
+    }
+    return id;
   };
 
-  /* --- Handle Input Changes --- */
-  const handleInputChange = (name: string, value: string) => {
+  /* ------------------------ */
+  /* Input / Selection Logic  */
+  /* ------------------------ */
+  const handleAnswerSelect = (field: string, value: string) => {
     setAnswers((prev) => ({
       ...prev,
-      userSpecific: { ...prev.userSpecific, [name]: value },
+      [field]: prev[field as keyof typeof prev] === value ? "" : value,
     }));
   };
 
-  /* --- Navigation --- */
+  const handleInputChange = (
+    field: string,
+    name: string,
+    value: string
+  ): void => {
+    if (field === "userSpecific") {
+      setAnswers((prev) => ({
+        ...prev,
+        userSpecific: { ...prev.userSpecific, [name]: value },
+      }));
+    } else {
+      setAnswers((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
+
+  /* ------------------------ */
+  /* Navigation               */
+  /* ------------------------ */
   const handleNext = () => {
     if (step < questions.length - 1) setStep((prev) => prev + 1);
   };
 
   const handleBack = () => {
-    if (step > 0) {
-      const currentField = questions[step].field;
-      setAnswers((prev) => {
-        const updated = { ...prev };
-        if (currentField === "userSpecific") {
-          updated.userSpecific = { income: "", creditScore: "" };
-        } else delete updated[currentField];
-        return updated;
-      });
-      setStep((prev) => prev - 1);
-    }
+    if (step > 0) setStep((prev) => prev - 1);
   };
 
-  /* --- Submit --- */
+  /* ------------------------ */
+  /* Submission               */
+  /* ------------------------ */
   const handleSubmit = () => {
+    const id = getOrCreateUserId();
+
+    let vehicleYearRange: number[] = [];
+    if (typeof answers.vehicleYearRange === "string") {
+      const parts = answers.vehicleYearRange
+        .split("-")
+        .map((y) => Number(y.trim()))
+        .filter((n) => !isNaN(n));
+      if (parts.length === 2) vehicleYearRange = parts;
+    }
+
     const formattedData = {
-      id: "user-001",
-      name: "John Doe",
-      password: "password123",
+      id,
+      name: "Guest User",
+      password: "localUser",
       userSpecific: {
         income: Number(answers.userSpecific.income),
         creditScore: Number(answers.userSpecific.creditScore),
       },
-      vehicleCondition: answers.vehicleCondition || "",
+      monthlyBudget: Number(answers.monthlyBudget) || 0,
+      vehicleType: "SEDAN",
       fuelType: answers.fuelType || "",
-      vehicleYear: answers.vehicleYear || "",
+      vehicleCondition: answers.vehicleCondition || "",
+      vehicleYearRange,
     };
 
-    console.log("🚀 Submitted Data:");
-    console.log(JSON.stringify(formattedData, null, 2));
+    localStorage.setItem("userData", JSON.stringify(formattedData));
+    console.log("✅ Saved user data:", formattedData);
 
-    setTimeout(() => {
-      router.push("/post-redirect");
-    }, 1000);
+    router.push("/post-redirect");
   };
 
-  /* --- UI Logic --- */
-  const hasSelectedAnswer =
-    current.type === "input"
+  /* ------------------------ */
+  /* UI LOGIC                 */
+  /* ------------------------ */
+  const isInputStep = current.type === "input";
+  const hasSelectedAnswer = isInputStep
+    ? current.field === "userSpecific"
       ? answers.userSpecific.income && answers.userSpecific.creditScore
-      : !!answers[current.field];
+      : !!answers[current.inputs?.[0]?.name as keyof typeof answers]
+    : !!answers[current.field as keyof typeof answers];
 
-  const isLastStep = step === questions.length - 1;
-  const total = questions.length;
-  const answeredCount =
-    Object.keys(answers).length -
-    (answers.userSpecific.income || answers.userSpecific.creditScore ? 0 : 1);
-  const progressValue = (answeredCount / total) * 100;
+  const progressValue = (step / questions.length) * 100;
 
+  /* ------------------------ */
+  /* RENDER                   */
+  /* ------------------------ */
   return (
     <Layout>
       <div className="mt-16 w-full">
+        {/* Progress */}
         {/* Progress Section */}
-        <div className="w-full px-16 mb-6 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <ToyotaIcon />
-            <p className="text-sm font-medium text-zinc-600">
-              {answeredCount} of {total} answered
-            </p>
+        <div className="w-full px-16 mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <ToyotaIcon />
+              <p className="text-sm font-medium text-zinc-600">
+                Step{" "}
+                <span className="font-semibold text-zinc-800">
+                  {Math.min(step, questions.length)}
+                </span>{" "}
+                of{" "}
+                <span className="font-semibold text-zinc-800">
+                  {questions.length}
+                </span>
+              </p>
+            </div>
+            <span className="text-xs text-zinc-500">
+              {Math.round(progressValue)}%
+            </span>
           </div>
-          <div className="flex-1">
-            <Progress
-              value={progressValue}
-              className="h-2 [&>div]:bg-[#EB0A1E]"
-            />
-          </div>
+
+          <Progress
+            value={progressValue}
+            className="h-2 [&>div]:bg-[#EB0A1E]"
+          />
         </div>
 
-        {/* Question Header */}
+        {/* Question */}
         <div className="flex flex-col items-center text-center">
-          <h1 className="font-bold text-2xl">Question</h1>
-          <p>{current.question}</p>
+          <h1 className="font-bold text-2xl mb-1">Question</h1>
+          <p className="text-zinc-600">{current.question}</p>
         </div>
 
-        {/* Dynamic Input or Answers */}
+        {/* Inputs / Choices */}
         <div className="mt-12 h-[500px] flex flex-row items-start justify-center gap-4 flex-wrap">
-          {current.type === "input" ? (
+          {isInputStep ? (
             <div className="flex flex-col gap-6 w-[400px]">
-              {current.inputs.map((input) => (
+              {current.inputs?.map((input) => (
                 <div key={input.name} className="flex flex-col text-left">
                   <label className="text-sm font-medium text-zinc-600 mb-2">
                     {input.label}
@@ -212,29 +273,42 @@ function Onboarding() {
                   <Input
                     type="number"
                     placeholder={input.placeholder}
-                    value={answers.userSpecific[input.name]}
+                    value={
+                      current.field === "userSpecific"
+                        ? answers.userSpecific[
+                            input.name as "income" | "creditScore"
+                          ]
+                        : (answers[
+                            input.name as keyof typeof answers
+                          ] as string) || ""
+                    }
                     onChange={(e) =>
-                      handleInputChange(input.name, e.target.value)
+                      handleInputChange(
+                        current.field,
+                        input.name,
+                        e.target.value
+                      )
                     }
                   />
                 </div>
               ))}
             </div>
-          ) : Array.isArray(current.answers) &&
-            Array.isArray(current.answer_description) ? (
-            current.answers.map((answer, idx) => (
+          ) : (
+            current.answers?.map((answer, idx) => (
               <CardAnswer
                 key={answer}
                 title={answer}
                 description={current.answer_description?.[idx] ?? ""}
                 onClick={() => handleAnswerSelect(current.field, answer)}
-                isSelected={answers[current.field] === answer}
+                isSelected={
+                  answers[current.field as keyof typeof answers] === answer
+                }
               />
             ))
-          ) : null}
+          )}
         </div>
 
-        {/* Navigation Buttons */}
+        {/* Buttons */}
         <div className="mt-4 flex flex-row justify-between px-16">
           <Button
             variant="outline"
@@ -244,30 +318,16 @@ function Onboarding() {
           >
             Back
           </Button>
-
-          {isLastStep ? (
-            <Button
-              variant="default"
-              onClick={handleSubmit}
-              disabled={!hasSelectedAnswer}
-              className="px-6"
-            >
-              Submit
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              onClick={handleNext}
-              disabled={!hasSelectedAnswer}
-              className="px-6"
-            >
-              Next
-            </Button>
-          )}
+          <Button
+            variant="default"
+            onClick={step === questions.length - 1 ? handleSubmit : handleNext}
+            disabled={!hasSelectedAnswer}
+            className="px-6"
+          >
+            {step === questions.length - 1 ? "Submit" : "Next"}
+          </Button>
         </div>
       </div>
     </Layout>
   );
 }
-
-export default Onboarding;
