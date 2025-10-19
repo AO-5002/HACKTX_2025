@@ -1,36 +1,14 @@
-import { ChildrenProps } from "@/utils/types/ComponentUtil";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MainContent, PageLayout } from "@/layouts/PageLayout";
-import { Main } from "next/document";
+"use client";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-function Box({ children }: ChildrenProps) {
+export default function Page() {
   return (
-    <div className="border-2 shadow-xl p-8 w-full h-96 rounded-lg">
-      {children}
+    <div className="w-full min-h-screen flex justify-center items-center flex-col gap-4">
+      <h1>Join</h1>
+      <Link href="/onboarding" className="bg-black p-4 text-white">
+        Go to Onboarding
+      </Link>
     </div>
-  );
-}
-
-function CarOverviewBox() {
-  return <Skeleton className="h-full w-full rounded-lg bg-zinc-200" />;
-}
-
-export default function Home() {
-  return (
-    <PageLayout>
-      <MainContent
-        header={
-          <>
-            <h1 className="text-3xl font-light">Car Overview</h1>
-            <p className="text-xs text-zinc-400">
-              finding the right fit for you
-            </p>
-          </>
-        }
-        mode={"full"}
-      >
-        <Skeleton className="h-96 w-full rounded-lg bg-zinc-200" />
-      </MainContent>
-    </PageLayout>
   );
 }

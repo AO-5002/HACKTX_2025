@@ -11,7 +11,7 @@ function PostLoginRedirect() {
   // Redirect after 2 seconds
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/dashboard/1");
+      router.push(`/analytics/${1}/match`);
     }, 2000);
 
     return () => clearTimeout(timer);
@@ -25,7 +25,7 @@ function PostLoginRedirect() {
 
         {/* Text */}
         <h1 className="text-lg font-medium text-zinc-700">
-          Redirecting you to your dashboard...
+          Redirecting you to Matching...
         </h1>
         <p className="text-xs text-zinc-400 mt-2">Please wait a moment</p>
       </div>

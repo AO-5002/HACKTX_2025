@@ -75,19 +75,17 @@ const questions = [
 /* --------------------------------------------------- */
 /* CARD ANSWER COMPONENT                               */
 /* --------------------------------------------------- */
-interface CardAnswerProps {
-  title: string;
-  description: string;
-  onClick?: () => void;
-  isSelected?: boolean;
-}
-
 function CardAnswer({
   title,
   description,
   onClick,
   isSelected,
-}: CardAnswerProps) {
+}: {
+  title: string;
+  description: string;
+  onClick?: () => void;
+  isSelected?: boolean;
+}) {
   return (
     <div
       onClick={onClick}
@@ -109,30 +107,15 @@ function CardAnswer({
 export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState<{
-    userSpecific: { income: string; creditScore: string };
-    monthlyBudget: string;
-    vehicleCondition?: string;
-    fuelType?: string;
-    vehicleYearRange?: string;
-  }>({
+  const [answers, setAnswers] = useState({
     userSpecific: { income: "", creditScore: "" },
     monthlyBudget: "",
+    vehicleCondition: "",
+    fuelType: "",
+    vehicleYearRange: "",
   });
 
   const current = questions[step];
-
-  /* ------------------------ */
-  /* Generate or Retrieve ID  */
-  /* ------------------------ */
-  const getOrCreateUserId = (): string => {
-    let id = localStorage.getItem("userId");
-    if (!id) {
-      id = `USER#${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      localStorage.setItem("userId", id);
-    }
-    return id;
-  };
 
   /* ------------------------ */
   /* Input / Selection Logic  */
@@ -165,47 +148,13 @@ export default function Onboarding() {
   /* ------------------------ */
   /* Navigation               */
   /* ------------------------ */
-  const handleNext = () => {
-    if (step < questions.length - 1) setStep((prev) => prev + 1);
-  };
-
-  const handleBack = () => {
-    if (step > 0) setStep((prev) => prev - 1);
-  };
+  const handleNext = () => step < questions.length - 1 && setStep(step + 1);
+  const handleBack = () => step > 0 && setStep(step - 1);
 
   /* ------------------------ */
-  /* Submission               */
+  /* Submission → Redirect    */
   /* ------------------------ */
   const handleSubmit = () => {
-    const id = getOrCreateUserId();
-
-    let vehicleYearRange: number[] = [];
-    if (typeof answers.vehicleYearRange === "string") {
-      const parts = answers.vehicleYearRange
-        .split("-")
-        .map((y) => Number(y.trim()))
-        .filter((n) => !isNaN(n));
-      if (parts.length === 2) vehicleYearRange = parts;
-    }
-
-    const formattedData = {
-      id,
-      name: "Guest User",
-      password: "localUser",
-      userSpecific: {
-        income: Number(answers.userSpecific.income),
-        creditScore: Number(answers.userSpecific.creditScore),
-      },
-      monthlyBudget: Number(answers.monthlyBudget) || 0,
-      vehicleType: "SEDAN",
-      fuelType: answers.fuelType || "",
-      vehicleCondition: answers.vehicleCondition || "",
-      vehicleYearRange,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(formattedData));
-    console.log("✅ Saved user data:", formattedData);
-
     router.push("/post-redirect");
   };
 
@@ -219,7 +168,7 @@ export default function Onboarding() {
       : !!answers[current.inputs?.[0]?.name as keyof typeof answers]
     : !!answers[current.field as keyof typeof answers];
 
-  const progressValue = (step / questions.length) * 100;
+  const progressValue = ((step + 1) / questions.length) * 100;
 
   /* ------------------------ */
   /* RENDER                   */
@@ -227,17 +176,14 @@ export default function Onboarding() {
   return (
     <Layout>
       <div className="mt-16 w-full">
-        {/* Progress */}
-        {/* Progress Section */}
+        {/* Progress Bar */}
         <div className="w-full px-16 mb-8">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <ToyotaIcon />
               <p className="text-sm font-medium text-zinc-600">
                 Step{" "}
-                <span className="font-semibold text-zinc-800">
-                  {Math.min(step, questions.length)}
-                </span>{" "}
+                <span className="font-semibold text-zinc-800">{step + 1}</span>{" "}
                 of{" "}
                 <span className="font-semibold text-zinc-800">
                   {questions.length}
@@ -248,7 +194,6 @@ export default function Onboarding() {
               {Math.round(progressValue)}%
             </span>
           </div>
-
           <Progress
             value={progressValue}
             className="h-2 [&>div]:bg-[#EB0A1E]"
@@ -308,7 +253,7 @@ export default function Onboarding() {
           )}
         </div>
 
-        {/* Buttons */}
+        {/* Navigation Buttons */}
         <div className="mt-4 flex flex-row justify-between px-16">
           <Button
             variant="outline"

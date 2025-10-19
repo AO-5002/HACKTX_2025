@@ -10,7 +10,7 @@ function Dashboard() {
         rightPanel={false}
         header={
           <>
-            <h1 className="text-2xl font-light">Hello 👋</h1>
+            <h1 className="text-2xl font-light">Welcome</h1>
             <p className="text-xs text-zinc-400">
               What would you like to do today?
             </p>
